@@ -7,6 +7,7 @@ import {
   ShareIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
+import { Button } from '../components/catalyst/Button'
 
 export default function HomePage() {
   return (
@@ -38,12 +39,9 @@ export default function HomePage() {
             <Link to="/login" className="text-sm font-semibold leading-6 text-gray-900">
               Log in
             </Link>
-            <Link
-              to="/signup"
-              className="rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-            >
+            <Button to="/signup" variant="solid" color="indigo">
               Start Creating
-            </Link>
+            </Button>
           </div>
         </nav>
       </header>
@@ -71,12 +69,9 @@ export default function HomePage() {
               Build your subscriber base and monetize your expertise with Jotts.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
-                to="/signup"
-                className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-              >
+              <Button to="/signup" variant="solid" color="indigo">
                 Start creating for free
-              </Link>
+              </Button>
               <Link to="/explore" className="text-sm font-semibold leading-6 text-gray-900">
                 Browse Jotts <span aria-hidden="true">→</span>
               </Link>
@@ -212,12 +207,9 @@ export default function HomePage() {
               Join thousands of creators who are already sharing their knowledge visually with Jottr.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
-                to="/signup"
-                className="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-gray-100"
-              >
+              <Button to="/signup" variant="solid" color="white">
                 Get started free
-              </Link>
+              </Button>
               <Link to="/explore" className="text-sm font-semibold leading-6 text-white">
                 See examples <span aria-hidden="true">→</span>
               </Link>
