@@ -1,0 +1,22 @@
+{
+  "name": "jottr-io",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "jottr-io",
+  "workspaceFolder": "/workspaces/jframe/jottr-io",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22.17.1"
+    }
+  },
+  "postCreateCommand": "corepack enable && (test -f pnpm-lock.yaml && corepack prepare pnpm@latest --activate && pnpm install --frozen-lockfile) || (test -f yarn.lock && corepack prepare yarn@stable --activate && yarn install --frozen-lockfile) || (test -f package-lock.json && npm ci) || npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  }
+}
