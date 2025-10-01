@@ -8,7 +8,7 @@ export type DesignerState = {
   }
   document: {
     cardJson: Record<string, unknown> | null
-    assets: Array<{ type: string; url: string; meta?: any }>
+    assets: Array<{ type: string; url: string; meta?: unknown }>
   }
   ui: {
     selectedNodeId?: string
