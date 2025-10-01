@@ -22,13 +22,13 @@ export type ReviewPayload = {
   feedback?: string
 }
 
-const ENABLE = import.meta.env.VITE_ENABLE_INTEGRAPH_ADAPTER === 'true'
-const BASE = (import.meta.env.VITE_INTEGRAPH_BASE_URL as string | undefined) || ''
+let _enabled = import.meta.env.VITE_ENABLE_INTEGRAPH_ADAPTER === 'true'
+let _base = (import.meta.env.VITE_INTEGRAPH_BASE_URL as string | undefined) || ''
 
 async function post<T>(path: string, body: unknown): Promise<T> {
-  if (!ENABLE) throw new Error('Integraph adapter disabled (VITE_ENABLE_INTEGRAPH_ADAPTER=false)')
-  if (!BASE) throw new Error('Missing VITE_INTEGRAPH_BASE_URL')
-  const res = await fetch(`${BASE}${path}`, {
+  if (!_enabled) throw new Error('Integraph adapter disabled (VITE_ENABLE_INTEGRAPH_ADAPTER=false)')
+  if (!_base) throw new Error('Missing VITE_INTEGRAPH_BASE_URL')
+  const res = await fetch(`${_base}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -63,9 +63,35 @@ export type ReviewResponse = {
 }
 
 export const Integraph = {
-  enabled: ENABLE,
-  baseUrl: BASE,
+  isEnabled: () => _enabled,
+  setEnabled: (v: boolean) => {
+    _enabled = v
+    try {
+      localStorage.setItem('integraph.enabled', String(v))
+    } catch {
+      // ignore storage failures
+    }
+  },
+  baseUrl: _base,
+  setBaseUrl: (v: string) => {
+    _base = v
+    try {
+      localStorage.setItem('integraph.baseUrl', v)
+    } catch {
+      // ignore storage failures
+    }
+  },
   generate: (p: GeneratePayload) => post<GenerateResponse>('/workflows/jott-generate', p),
   cont: (p: ContinuePayload) => post<ContinueResponse>('/workflows/jott-continue', p),
   review: (p: ReviewPayload) => post<ReviewResponse>('/workflows/review-approve', p),
+}
+
+// Initialize from localStorage overrides if present
+try {
+  const s = localStorage.getItem('integraph.enabled')
+  if (s != null) _enabled = s === 'true'
+  const b = localStorage.getItem('integraph.baseUrl')
+  if (b) _base = b
+} catch {
+  // ignore storage failures
 }

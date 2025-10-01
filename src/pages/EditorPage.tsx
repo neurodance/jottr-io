@@ -8,6 +8,7 @@ import {
   type ContinueResponse,
   type ReviewResponse,
 } from '../lib/integraph'
+import AdaptiveCardRenderer from '../components/AdaptiveCardRenderer'
 
 export default function EditorPage() {
   const [log, setLog] = useState<string>('')
@@ -22,7 +23,7 @@ export default function EditorPage() {
     setLog((s) => s + `\n${label}: ` + JSON.stringify(payload))
 
   const onGenerate = async () => {
-    if (!Integraph.enabled || busy) return
+  if (!Integraph.isEnabled() || busy) return
     try {
       setBusy(true)
       const genPayload: GeneratePayload = { prompt, mode: 'no-code', draftLevel: 1 }
@@ -40,7 +41,7 @@ export default function EditorPage() {
   }
 
   const onContinue = async () => {
-    if (!Integraph.enabled || busy) return
+  if (!Integraph.isEnabled() || busy) return
     try {
       setBusy(true)
       const prior = lastCard ?? { type: 'AdaptiveCard', version: '1.6', body: [] }
@@ -58,7 +59,7 @@ export default function EditorPage() {
   }
 
   const onReview = async () => {
-    if (!Integraph.enabled || busy) return
+  if (!Integraph.isEnabled() || busy) return
     try {
       setBusy(true)
       const reviewPayload: ReviewPayload = { workflowId: 'local', step: 'editor', decision: 'approve', feedback }
@@ -74,7 +75,7 @@ export default function EditorPage() {
   }
 
   useEffect(() => {
-    if (!Integraph.enabled || !autoRun) return
+  if (!Integraph.isEnabled() || !autoRun) return
     ;(async () => {
       await onGenerate()
       await onContinue()
@@ -83,7 +84,7 @@ export default function EditorPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRun])
 
-  if (!Integraph.enabled) {
+  if (!Integraph.isEnabled()) {
     return <div>Jott Editor - Coming Soon (Integraph adapter disabled)</div>
   }
 
@@ -91,6 +92,22 @@ export default function EditorPage() {
     <div className="p-4 space-y-4">
       <div className="font-semibold">Jott Editor - Integraph Harness</div>
       <div className="text-sm text-gray-500">Base URL: {Integraph.baseUrl || '(unset)'}</div>
+      <div className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={Integraph.isEnabled()}
+            onChange={(e) => Integraph.setEnabled(e.target.checked)}
+          />
+          Enable adapter
+        </label>
+        <input
+          className="border rounded p-1"
+          defaultValue={Integraph.baseUrl}
+          onBlur={(e) => Integraph.setBaseUrl(e.target.value)}
+          placeholder="http://localhost:8000"
+        />
+      </div>
 
       <div className="space-y-2">
         <label className="block text-sm" htmlFor="prompt-textarea">Prompt</label>
@@ -159,7 +176,14 @@ export default function EditorPage() {
 
       <pre className="text-xs bg-gray-100 p-2 rounded max-h-80 overflow-auto">{log}</pre>
       {lastCard && (
-        <pre className="text-xs bg-gray-50 p-2 rounded max-h-80 overflow-auto">{JSON.stringify(lastCard, null, 2)}</pre>
+        <div className="border rounded p-3">
+          <div className="text-sm font-semibold mb-2">Preview</div>
+          <AdaptiveCardRenderer card={lastCard} />
+          <details className="mt-2">
+            <summary className="cursor-pointer text-sm">Raw JSON</summary>
+            <pre className="text-xs bg-gray-50 p-2 rounded max-h-80 overflow-auto">{JSON.stringify(lastCard, null, 2)}</pre>
+          </details>
+        </div>
       )}
     </div>
   )
