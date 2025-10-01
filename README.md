@@ -1,4 +1,19 @@
-# React + TypeScript + Vite
+# Jottr-io
+
+## Integraph adapter (experimental)
+
+To enable backend calls to Integraph in the Editor page:
+
+1. Copy `.env.local.example` to `.env.local`
+2. Ensure Integraph server is running and set `VITE_INTEGRAPH_BASE_URL`
+3. Start dev server and open `/editor`
+
+Environment variables:
+
+- `VITE_ENABLE_INTEGRAPH_ADAPTER=true|false`
+- `VITE_INTEGRAPH_BASE_URL` (e.g., `http://localhost:8000`)
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
