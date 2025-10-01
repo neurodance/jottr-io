@@ -9,10 +9,13 @@ import {
   type ReviewResponse,
 } from '../lib/integraph'
 import AdaptiveCardRenderer from '../components/AdaptiveCardRenderer'
+import { useDesigner, setCard, setSuggestions, update } from '../lib/designerStore'
+import { validateAdaptiveCard } from '../lib/validateCard'
 
 export default function EditorPage() {
   const [log, setLog] = useState<string>('')
-  const [lastCard, setLastCard] = useState<Record<string, unknown> | null>(null)
+  const designer = useDesigner()
+  const lastCard = designer.document.cardJson
   const [prompt, setPrompt] = useState<string>('Welcome card')
   const [action, setAction] = useState<'expand' | 'analyze' | 'lateral' | 'temporal'>('expand')
   const [feedback, setFeedback] = useState<string>('')
@@ -27,10 +30,12 @@ export default function EditorPage() {
     try {
       setBusy(true)
       const genPayload: GeneratePayload = { prompt, mode: 'no-code', draftLevel: 1 }
-      const gen: GenerateResponse = await Integraph.generate(genPayload)
+  const gen: GenerateResponse = await Integraph.generate(genPayload)
       appendLog('Generated', gen)
       const prior = gen.cardJson ?? { type: 'AdaptiveCard', version: '1.6', body: [] }
-      setLastCard(prior)
+  setCard(prior)
+  update({ validation: validateAdaptiveCard(prior) })
+  if (Array.isArray(gen.continuationSuggestions)) setSuggestions(gen.continuationSuggestions)
       return gen
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
@@ -46,9 +51,13 @@ export default function EditorPage() {
       setBusy(true)
       const prior = lastCard ?? { type: 'AdaptiveCard', version: '1.6', body: [] }
       const contPayload: ContinuePayload = { priorContent: prior, desiredAction: action }
-      const cont: ContinueResponse = await Integraph.cont(contPayload)
+  const cont: ContinueResponse = await Integraph.cont(contPayload)
       appendLog('Continued', cont)
-      if (cont.updatedCardJson) setLastCard(cont.updatedCardJson)
+      if (cont.updatedCardJson) {
+        setCard(cont.updatedCardJson)
+        update({ validation: validateAdaptiveCard(cont.updatedCardJson) })
+      }
+  if (Array.isArray(cont.suggestions)) setSuggestions(cont.suggestions)
       return cont
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
@@ -166,7 +175,9 @@ export default function EditorPage() {
           className="ml-2 px-3 py-1 border rounded"
           onClick={() => {
             setLog('')
-            setLastCard(null)
+            setCard(null)
+            setSuggestions([])
+            update({ validation: undefined })
           }}
           disabled={busy}
         >
@@ -179,6 +190,30 @@ export default function EditorPage() {
         <div className="border rounded p-3">
           <div className="text-sm font-semibold mb-2">Preview</div>
           <AdaptiveCardRenderer card={lastCard} />
+          {designer.validation && (designer.validation.errors.length > 0 || designer.validation.warnings.length > 0) && (
+            <div className="mt-2 text-xs">
+              {designer.validation.errors.length > 0 && (
+                <div className="text-red-600">
+                  <div className="font-semibold">Errors</div>
+                  <ul className="list-disc ml-4">
+                    {designer.validation.errors.map((e, i) => (
+                      <li key={i}>{e.path ? `${e.path}: ` : ''}{e.message}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {designer.validation.warnings.length > 0 && (
+                <div className="text-yellow-700 mt-1">
+                  <div className="font-semibold">Warnings</div>
+                  <ul className="list-disc ml-4">
+                    {designer.validation.warnings.map((w, i) => (
+                      <li key={i}>{w.path ? `${w.path}: ` : ''}{w.message}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
           <details className="mt-2">
             <summary className="cursor-pointer text-sm">Raw JSON</summary>
             <pre className="text-xs bg-gray-50 p-2 rounded max-h-80 overflow-auto">{JSON.stringify(lastCard, null, 2)}</pre>
