@@ -296,7 +296,9 @@ function renderNode(node: ACNode, idx: number) {
         <select
           key={idx}
           multiple={multi}
-          defaultValue={(Array.isArray(n.value) ? n.value : n.value ? [n.value] : []) as string[]}
+          {...(multi
+            ? { defaultValue: (Array.isArray(n.value) ? n.value : n.value ? [n.value] : []) as string[] }
+            : { defaultValue: (typeof n.value === 'string' ? n.value : undefined) as string | undefined })}
           className={theme.input}
           aria-label={n.placeholder ?? n.id ?? 'choices'}
         >
