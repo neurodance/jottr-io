@@ -11,6 +11,7 @@ import {
 } from '../lib/integraph'
 import AdaptiveCardRenderer from '../components/AdaptiveCardRenderer'
 import { ErrorPanel } from '../components/ErrorPanel'
+import { pushEvent, getEvents } from '../lib/telemetry'
 import { useDesigner, setCard, setSuggestions, update, resetSession, resumeSession } from '../lib/designerStore'
 import { validateAdaptiveCard } from '../lib/validateCard'
 
@@ -109,7 +110,16 @@ export default function EditorPage() {
   useEffect(() => {
     Integraph.setTelemetry({
       onRequest: () => {},
-      onResponse: () => {},
+      onResponse: (info) => {
+        pushEvent({
+          path: info.path,
+          startedAt: info.startedAt,
+          endedAt: info.endedAt,
+          ok: info.ok,
+          status: info.status,
+          correlationId: info.correlationId,
+        })
+      },
     })
   }, [])
 
@@ -120,7 +130,19 @@ export default function EditorPage() {
   return (
     <div className="p-4 space-y-4">
       <div className="font-semibold">Jott Editor - Integraph Harness</div>
-  <div className="text-sm text-gray-500">Base URL: {Integraph.baseUrl || '(unset)'}</div>
+      <div className="text-sm text-gray-500">
+        Base URL: {Integraph.baseUrl || '(unset)'}
+        {(() => {
+          const evs = getEvents()
+          const last = evs[evs.length - 1]
+          return last?.correlationId ? (
+            <span className="ml-2 inline-flex items-center gap-1 text-xs border rounded px-1 py-0.5">
+              <span className="opacity-70">corr</span>
+              <code>{last.correlationId}</code>
+            </span>
+          ) : null
+        })()}
+      </div>
   {lastError && <ErrorPanel title={`Error in ${lastError.step}`} details={lastError.msg} correlationId={lastError.correlationId} />}
       <div className="text-xs text-gray-600">
         Session: runId={designer.session.runId ?? '(none)'} jottId={designer.session.jottId ?? '(none)'} correlationId={designer.session.correlationId ?? '(none)'}
