@@ -15,13 +15,14 @@ import type {
   InputToggleNode,
 } from '../types/adaptive-card'
 import { getRenderer } from '../lib/rendererRegistry'
+import { theme } from '../lib/theme'
 
 function TextBlock({ node }: { node: TextBlockNode }) {
   const text = String(node.text ?? '')
   const wrap = node.wrap !== false
-  const weight = node.weight === 'bolder' ? 'font-bold' : ''
-  const sizeCls = node.size === 'large' ? 'text-lg' : node.size === 'small' ? 'text-sm' : 'text-base'
-  const wrapCls = wrap ? 'whitespace-normal' : 'whitespace-nowrap'
+  const weight = node.weight === 'bolder' ? theme.text.weight.bold : theme.text.weight.normal
+  const sizeCls = node.size === 'large' ? theme.text.size.large : node.size === 'small' ? theme.text.size.small : theme.text.size.default
+  const wrapCls = wrap ? theme.layout.wrap.on : theme.layout.wrap.off
   return <div className={`${sizeCls} ${weight} ${wrapCls}`}>{text}</div>
 }
 
@@ -80,6 +81,7 @@ function isOpenUrl(a: Action | Record<string, unknown>): a is Extract<Action, { 
 function ActionButton({ action }: { action: Action }) {
   const title: string = hasTitle(action) && typeof (action as Record<string, unknown>).title === 'string' ? ((action as Record<string, unknown>).title as string) : 'Action'
   const common = 'px-3 py-1.5 rounded border text-sm hover:bg-gray-50'
+  // could be replaced with theme.button later
   if (isOpenUrl(action)) {
     return (
       <a href={action.url} target="_blank" rel="noreferrer" className={common}>
