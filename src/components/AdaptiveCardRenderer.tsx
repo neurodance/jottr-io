@@ -336,7 +336,8 @@ export default function AdaptiveCardRenderer({ card }: { card: AdaptiveCard }) {
         const id = typeof t === 'string' ? t : t.elementId
         const setTo = typeof t === 'string' ? undefined : t.isVisible
         if (!id) continue
-        next[id] = typeof setTo === 'boolean' ? setTo : !prev[id]
+        const current = id in prev ? !!prev[id] : true
+        next[id] = typeof setTo === 'boolean' ? setTo : !current
       }
       return next
     })
