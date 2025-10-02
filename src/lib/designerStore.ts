@@ -4,6 +4,7 @@ export type DesignerState = {
   session: {
     correlationId?: string
     jottId?: string
+    runId?: string
     mode: 'no-code' | 'pro-code'
   }
   document: {

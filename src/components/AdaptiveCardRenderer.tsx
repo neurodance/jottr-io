@@ -8,6 +8,11 @@ import type {
   ImageNode,
   ActionSetNode,
   Action,
+  FactSetNode,
+  RichTextBlockNode,
+  InputTextNode,
+  InputNumberNode,
+  InputToggleNode,
 } from '../types/adaptive-card'
 import { getRenderer } from '../lib/rendererRegistry'
 
@@ -82,6 +87,19 @@ function ActionButton({ action }: { action: Action }) {
       </a>
     )
   }
+  if ((action as Record<string, unknown>).type === 'Action.ShowCard') {
+    const card = (action as Record<string, unknown>).card as AdaptiveCard | undefined
+    return (
+      <details className={common.replace('px-3 py-1.5', '') + ' p-0 border-none'}>
+        <summary className="px-3 py-1.5 rounded border inline-block">{title}</summary>
+        {card && (
+          <div className="mt-2 p-2 border rounded">
+            <AdaptiveCardRenderer card={card} />
+          </div>
+        )}
+      </details>
+    )
+  }
   // Submit or unknown action: non-functional placeholder button
   return <button type="button" className={common}>{title}</button>
 }
@@ -117,6 +135,71 @@ function renderNode(node: ACNode, idx: number) {
       return <ColumnSet key={idx} node={node as ColumnSetNode} />
     case 'ActionSet':
       return <ActionSet key={idx} node={node as ActionSetNode} />
+    case 'FactSet': {
+      const n = node as FactSetNode
+      const facts = Array.isArray(n.facts) ? n.facts : []
+      return (
+        <table key={idx} className="text-sm">
+          <tbody>
+            {facts.map((f, i) => (
+              <tr key={i}>
+                <td className="pr-4 text-gray-600 whitespace-nowrap">{f.title}</td>
+                <td>{f.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )
+    }
+    case 'RichTextBlock': {
+      const n = node as RichTextBlockNode
+      const inlines = Array.isArray(n.inlines) ? n.inlines : []
+      return (
+        <div key={idx} className="text-base">
+          {inlines.map((r, i) => {
+            if (typeof r === 'string') return <span key={i}>{r}</span>
+            const cls = [
+              r.bold ? 'font-bold' : '',
+              r.italic ? 'italic' : '',
+              r.underline ? 'underline' : '',
+              r.size === 'small' ? 'text-sm' : r.size === 'large' ? 'text-lg' : 'text-base',
+            ]
+              .filter(Boolean)
+              .join(' ')
+            return <span key={i} className={cls}>{r.text}</span>
+          })}
+        </div>
+      )
+    }
+    case 'Input.Text':
+      return (
+        <input
+          key={idx}
+          type="text"
+          className="border rounded p-2 text-sm w-full"
+          placeholder={(node as InputTextNode).placeholder}
+          defaultValue={(node as InputTextNode).value}
+        />
+      )
+    case 'Input.Number':
+      return (
+        <input
+          key={idx}
+          type="number"
+          className="border rounded p-2 text-sm w-full"
+          placeholder={(node as InputNumberNode).placeholder}
+          defaultValue={(node as InputNumberNode).value}
+          min={(node as InputNumberNode).min}
+          max={(node as InputNumberNode).max}
+        />
+      )
+    case 'Input.Toggle':
+      return (
+        <label key={idx} className="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" defaultChecked={(node as InputToggleNode).value === 'true'} />
+          {(node as InputToggleNode).title}
+        </label>
+      )
     default:
       return (
         <div key={idx} className="text-xs text-gray-500">

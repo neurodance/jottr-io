@@ -35,6 +35,42 @@ export type ColumnSetNode = {
   columns?: ColumnNode[]
 } & ACUnknown
 
+export type Fact = { title?: string; value?: string }
+export type FactSetNode = {
+  type: 'FactSet'
+  facts?: Fact[]
+} & ACUnknown
+
+export type TextRun = { type?: 'TextRun'; text?: string; bold?: boolean; italic?: boolean; underline?: boolean; size?: 'small' | 'default' | 'large' }
+export type RichTextBlockNode = {
+  type: 'RichTextBlock'
+  inlines?: Array<TextRun | string>
+} & ACUnknown
+
+export type InputTextNode = {
+  type: 'Input.Text'
+  id?: string
+  placeholder?: string
+  value?: string
+  isMultiline?: boolean
+} & ACUnknown
+
+export type InputNumberNode = {
+  type: 'Input.Number'
+  id?: string
+  placeholder?: string
+  value?: number
+  min?: number
+  max?: number
+} & ACUnknown
+
+export type InputToggleNode = {
+  type: 'Input.Toggle'
+  id?: string
+  title?: string
+  value?: 'true' | 'false'
+} & ACUnknown
+
 export type ActionOpenUrl = {
   type: 'Action.OpenUrl'
   title?: string
@@ -47,7 +83,13 @@ export type ActionSubmit = {
   data?: unknown
 } & ACUnknown
 
-export type Action = ActionOpenUrl | ActionSubmit | ACUnknown
+export type ActionShowCard = {
+  type: 'Action.ShowCard'
+  title?: string
+  card?: AdaptiveCard
+} & ACUnknown
+
+export type Action = ActionOpenUrl | ActionSubmit | ActionShowCard | ACUnknown
 
 export type ActionSetNode = {
   type: 'ActionSet'
@@ -59,6 +101,11 @@ export type ACNode =
   | ImageNode
   | ContainerNode
   | ColumnSetNode
+  | FactSetNode
+  | RichTextBlockNode
+  | InputTextNode
+  | InputNumberNode
+  | InputToggleNode
   | ActionSetNode
   | ACUnknown
 

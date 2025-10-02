@@ -40,6 +40,8 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 export type GenerateResponse = {
   correlationId?: string
   status: 'ok' | 'error' | 'pending'
+  run_id?: string
+  jott_id?: string
   cardJson?: CardJson
   assets?: Array<Record<string, unknown>>
   continuationSuggestions?: string[]
@@ -49,6 +51,8 @@ export type GenerateResponse = {
 export type ContinueResponse = {
   correlationId?: string
   status: 'ok' | 'error' | 'pending'
+  run_id?: string
+  jott_id?: string
   updatedCardJson?: CardJson
   nextJott?: Record<string, unknown>
   suggestions?: string[]
@@ -58,6 +62,8 @@ export type ContinueResponse = {
 export type ReviewResponse = {
   correlationId?: string
   status: 'ok' | 'error' | 'pending'
+  run_id?: string
+  jott_id?: string
   nextStep?: 'publish' | 'revise' | string
   links?: Record<string, unknown>
 }

@@ -29,12 +29,14 @@ export default function EditorPage() {
   if (!Integraph.isEnabled() || busy) return
     try {
       setBusy(true)
-      const genPayload: GeneratePayload = { prompt, mode: 'no-code', draftLevel: 1 }
+  const genPayload: GeneratePayload = { prompt, mode: 'no-code', draftLevel: 1 }
   const gen: GenerateResponse = await Integraph.generate(genPayload)
       appendLog('Generated', gen)
       const prior = gen.cardJson ?? { type: 'AdaptiveCard', version: '1.6', body: [] }
   setCard(prior)
   update({ validation: validateAdaptiveCard(prior) })
+  // persist IDs if provided
+  if (gen.run_id) update({ session: { ...designer.session, runId: gen.run_id, correlationId: gen.correlationId, jottId: gen.jott_id ?? designer.session.jottId } })
   if (Array.isArray(gen.continuationSuggestions)) setSuggestions(gen.continuationSuggestions)
       return gen
     } catch (e) {
@@ -50,13 +52,14 @@ export default function EditorPage() {
     try {
       setBusy(true)
       const prior = lastCard ?? { type: 'AdaptiveCard', version: '1.6', body: [] }
-      const contPayload: ContinuePayload = { priorContent: prior, desiredAction: action }
+      const contPayload: ContinuePayload = { priorContent: prior, desiredAction: action, jottId: designer.session.jottId }
   const cont: ContinueResponse = await Integraph.cont(contPayload)
       appendLog('Continued', cont)
       if (cont.updatedCardJson) {
         setCard(cont.updatedCardJson)
         update({ validation: validateAdaptiveCard(cont.updatedCardJson) })
       }
+  if (cont.run_id) update({ session: { ...designer.session, runId: cont.run_id, correlationId: cont.correlationId, jottId: cont.jott_id ?? designer.session.jottId } })
   if (Array.isArray(cont.suggestions)) setSuggestions(cont.suggestions)
       return cont
     } catch (e) {
@@ -71,9 +74,10 @@ export default function EditorPage() {
   if (!Integraph.isEnabled() || busy) return
     try {
       setBusy(true)
-      const reviewPayload: ReviewPayload = { workflowId: 'local', step: 'editor', decision: 'approve', feedback }
+  const reviewPayload: ReviewPayload = { workflowId: designer.session.runId || 'local', step: 'editor', decision: 'approve', feedback }
       const rev: ReviewResponse = await Integraph.review(reviewPayload)
       appendLog('Reviewed', rev)
+  if (rev.run_id) update({ session: { ...designer.session, runId: rev.run_id, correlationId: rev.correlationId, jottId: rev.jott_id ?? designer.session.jottId } })
       return rev
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
