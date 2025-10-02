@@ -33,6 +33,8 @@ export type ColumnNode = {
 export type ColumnSetNode = {
   type: 'ColumnSet'
   columns?: ColumnNode[]
+  horizontalAlignment?: 'left' | 'center' | 'right'
+  spacing?: 'none' | 'small' | 'default' | 'medium' | 'large' | 'extraLarge' | 'padding'
 } & ACUnknown
 
 export type Fact = { title?: string; value?: string }
@@ -45,6 +47,22 @@ export type TextRun = { type?: 'TextRun'; text?: string; bold?: boolean; italic?
 export type RichTextBlockNode = {
   type: 'RichTextBlock'
   inlines?: Array<TextRun | string>
+} & ACUnknown
+
+export type ImageSetNode = {
+  type: 'ImageSet'
+  images?: ImageNode[]
+  imageSize?: 'small' | 'medium' | 'large'
+} & ACUnknown
+
+export type MediaSource = { mimeType?: string; url: string }
+export type MediaNode = {
+  type: 'Media'
+  sources?: MediaSource[]
+  poster?: string
+  altText?: string
+  autoplay?: boolean
+  loop?: boolean
 } & ACUnknown
 
 export type InputTextNode = {
@@ -71,6 +89,31 @@ export type InputToggleNode = {
   value?: 'true' | 'false'
 } & ACUnknown
 
+export type InputChoice = { title?: string; value?: string }
+export type InputChoiceSetNode = {
+  type: 'Input.ChoiceSet'
+  id?: string
+  placeholder?: string
+  value?: string | string[]
+  isMultiSelect?: boolean
+  style?: 'compact' | 'expanded'
+  choices?: InputChoice[]
+} & ACUnknown
+
+export type InputDateNode = {
+  type: 'Input.Date'
+  id?: string
+  placeholder?: string
+  value?: string
+} & ACUnknown
+
+export type InputTimeNode = {
+  type: 'Input.Time'
+  id?: string
+  placeholder?: string
+  value?: string
+} & ACUnknown
+
 export type ActionOpenUrl = {
   type: 'Action.OpenUrl'
   title?: string
@@ -89,7 +132,14 @@ export type ActionShowCard = {
   card?: AdaptiveCard
 } & ACUnknown
 
-export type Action = ActionOpenUrl | ActionSubmit | ActionShowCard | ACUnknown
+export type ToggleTarget = string | { elementId: string; isVisible?: boolean }
+export type ActionToggleVisibility = {
+  type: 'Action.ToggleVisibility'
+  title?: string
+  targetElements?: ToggleTarget[]
+} & ACUnknown
+
+export type Action = ActionOpenUrl | ActionSubmit | ActionShowCard | ActionToggleVisibility | ACUnknown
 
 export type ActionSetNode = {
   type: 'ActionSet'
@@ -103,9 +153,14 @@ export type ACNode =
   | ColumnSetNode
   | FactSetNode
   | RichTextBlockNode
+  | ImageSetNode
+  | MediaNode
   | InputTextNode
   | InputNumberNode
   | InputToggleNode
+  | InputChoiceSetNode
+  | InputDateNode
+  | InputTimeNode
   | ActionSetNode
   | ACUnknown
 

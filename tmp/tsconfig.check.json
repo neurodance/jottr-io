@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.app.json",
+  "include": [
+    "../src/components/AdaptiveCardRenderer.tsx",
+    "../src/types/adaptive-card.ts",
+    "../src/lib/theme.ts"
+  ],
+  "exclude": ["**/*"]
+}
