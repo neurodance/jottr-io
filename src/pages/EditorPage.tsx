@@ -7,13 +7,16 @@ import {
   type GenerateResponse,
   type ContinueResponse,
   type ReviewResponse,
+  HttpError,
 } from '../lib/integraph'
 import AdaptiveCardRenderer from '../components/AdaptiveCardRenderer'
+import { ErrorPanel } from '../components/ErrorPanel'
 import { useDesigner, setCard, setSuggestions, update, resetSession, resumeSession } from '../lib/designerStore'
 import { validateAdaptiveCard } from '../lib/validateCard'
 
 export default function EditorPage() {
   const [log, setLog] = useState<string>('')
+  const [lastError, setLastError] = useState<{ step: string; msg: string; correlationId?: string } | null>(null)
   const designer = useDesigner()
   const lastCard = designer.document.cardJson
   const [userPrompt, setPrompt] = useState<string>('Welcome card')
@@ -22,8 +25,7 @@ export default function EditorPage() {
   const [autoRun, setAutoRun] = useState<boolean>(false)
   const [busy, setBusy] = useState<boolean>(false)
 
-  const appendLog = (label: string, payload: unknown) =>
-    setLog((s) => s + `\n${label}: ` + JSON.stringify(payload))
+  const appendLog = (label: string, payload: unknown) => setLog((s) => s + `\n${label}: ` + JSON.stringify(payload))
 
   const onGenerate = async () => {
   if (!Integraph.isEnabled() || busy) return
@@ -40,8 +42,10 @@ export default function EditorPage() {
   if (Array.isArray(gen.continuationSuggestions)) setSuggestions(gen.continuationSuggestions)
       return gen
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      appendLog('Error', { step: 'generate', msg })
+  const msg = e instanceof Error ? e.message : String(e)
+  const correlationId = e instanceof HttpError ? e.correlationId : undefined
+      setLastError({ step: 'generate', msg, correlationId })
+      appendLog('Error', { step: 'generate', msg, correlationId })
     } finally {
       setBusy(false)
     }
@@ -63,8 +67,10 @@ export default function EditorPage() {
   if (Array.isArray(cont.suggestions)) setSuggestions(cont.suggestions)
       return cont
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      appendLog('Error', { step: 'continue', msg })
+  const msg = e instanceof Error ? e.message : String(e)
+  const correlationId = e instanceof HttpError ? e.correlationId : undefined
+      setLastError({ step: 'continue', msg, correlationId })
+      appendLog('Error', { step: 'continue', msg, correlationId })
     } finally {
       setBusy(false)
     }
@@ -80,8 +86,10 @@ export default function EditorPage() {
   if (rev.run_id) update({ session: { ...designer.session, runId: rev.run_id, correlationId: rev.correlationId, jottId: rev.jott_id ?? designer.session.jottId } })
       return rev
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      appendLog('Error', { step: 'review', msg })
+  const msg = e instanceof Error ? e.message : String(e)
+  const correlationId = e instanceof HttpError ? e.correlationId : undefined
+      setLastError({ step: 'review', msg, correlationId })
+      appendLog('Error', { step: 'review', msg, correlationId })
     } finally {
       setBusy(false)
     }
@@ -97,6 +105,14 @@ export default function EditorPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRun])
 
+  // Attach simple telemetry to capture correlationIds and timings
+  useEffect(() => {
+    Integraph.setTelemetry({
+      onRequest: () => {},
+      onResponse: () => {},
+    })
+  }, [])
+
   if (!Integraph.isEnabled()) {
     return <div>Jott Editor - Coming Soon (Integraph adapter disabled)</div>
   }
@@ -104,7 +120,8 @@ export default function EditorPage() {
   return (
     <div className="p-4 space-y-4">
       <div className="font-semibold">Jott Editor - Integraph Harness</div>
-      <div className="text-sm text-gray-500">Base URL: {Integraph.baseUrl || '(unset)'}</div>
+  <div className="text-sm text-gray-500">Base URL: {Integraph.baseUrl || '(unset)'}</div>
+  {lastError && <ErrorPanel title={`Error in ${lastError.step}`} details={lastError.msg} correlationId={lastError.correlationId} />}
       <div className="text-xs text-gray-600">
         Session: runId={designer.session.runId ?? '(none)'} jottId={designer.session.jottId ?? '(none)'} correlationId={designer.session.correlationId ?? '(none)'}
       </div>

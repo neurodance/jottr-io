@@ -25,15 +25,38 @@ export type ReviewPayload = {
 let _enabled = import.meta.env.VITE_ENABLE_INTEGRAPH_ADAPTER === 'true'
 let _base = (import.meta.env.VITE_INTEGRAPH_BASE_URL as string | undefined) || ''
 
+export class HttpError extends Error {
+  status: number
+  correlationId?: string
+  constructor(message: string, status: number, correlationId?: string) {
+    super(message)
+    this.status = status
+    this.correlationId = correlationId
+  }
+}
+
+type Telemetry = {
+  onRequest?: (info: { path: string; startedAt: number }) => void
+  onResponse?: (info: { path: string; startedAt: number; endedAt: number; ok: boolean; status: number; correlationId?: string }) => void
+}
+
+let _telemetry: Telemetry = {}
+
 async function post<T>(path: string, body: unknown): Promise<T> {
-  if (!_enabled) throw new Error('Integraph adapter disabled (VITE_ENABLE_INTEGRAPH_ADAPTER=false)')
-  if (!_base) throw new Error('Missing VITE_INTEGRAPH_BASE_URL')
-  const res = await fetch(`${_base}${path}`, {
+  if (!_enabled) throw new HttpError('Integraph adapter disabled (VITE_ENABLE_INTEGRAPH_ADAPTER=false)', 0)
+  if (!_base) throw new HttpError('Missing VITE_INTEGRAPH_BASE_URL', 0)
+  const url = `${_base}${path}`
+  const startedAt = Date.now()
+  _telemetry.onRequest?.({ path, startedAt })
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const endedAt = Date.now()
+  const correlationId = res.headers.get('x-correlation-id') ?? undefined
+  _telemetry.onResponse?.({ path, startedAt, endedAt, ok: res.ok, status: res.status, correlationId })
+  if (!res.ok) throw new HttpError(`HTTP ${res.status}`, res.status, correlationId)
   return (await res.json()) as T
 }
 
@@ -86,6 +109,9 @@ export const Integraph = {
     } catch {
       // ignore storage failures
     }
+  },
+  setTelemetry: (t: Telemetry) => {
+    _telemetry = t
   },
   generate: (p: GeneratePayload) => post<GenerateResponse>('/workflows/jott-generate', p),
   cont: (p: ContinuePayload) => post<ContinueResponse>('/workflows/jott-continue', p),
