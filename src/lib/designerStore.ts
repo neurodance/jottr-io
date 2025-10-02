@@ -73,6 +73,14 @@ export function setSuggestions(suggestions: string[]) {
   update({ suggestions })
 }
 
+export function resetSession() {
+  update({ session: { ...state.session, runId: undefined, jottId: undefined, correlationId: undefined } })
+}
+
+export function resumeSession(runId?: string, jottId?: string) {
+  update({ session: { ...state.session, runId, jottId } })
+}
+
 export function subscribe(listener: () => void) {
   listeners.add(listener)
   return () => listeners.delete(listener)

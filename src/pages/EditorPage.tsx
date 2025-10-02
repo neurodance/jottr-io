@@ -9,14 +9,14 @@ import {
   type ReviewResponse,
 } from '../lib/integraph'
 import AdaptiveCardRenderer from '../components/AdaptiveCardRenderer'
-import { useDesigner, setCard, setSuggestions, update } from '../lib/designerStore'
+import { useDesigner, setCard, setSuggestions, update, resetSession, resumeSession } from '../lib/designerStore'
 import { validateAdaptiveCard } from '../lib/validateCard'
 
 export default function EditorPage() {
   const [log, setLog] = useState<string>('')
   const designer = useDesigner()
   const lastCard = designer.document.cardJson
-  const [prompt, setPrompt] = useState<string>('Welcome card')
+  const [userPrompt, setPrompt] = useState<string>('Welcome card')
   const [action, setAction] = useState<'expand' | 'analyze' | 'lateral' | 'temporal'>('expand')
   const [feedback, setFeedback] = useState<string>('')
   const [autoRun, setAutoRun] = useState<boolean>(false)
@@ -29,7 +29,7 @@ export default function EditorPage() {
   if (!Integraph.isEnabled() || busy) return
     try {
       setBusy(true)
-  const genPayload: GeneratePayload = { prompt, mode: 'no-code', draftLevel: 1 }
+  const genPayload: GeneratePayload = { prompt: userPrompt, mode: 'no-code', draftLevel: 1 }
   const gen: GenerateResponse = await Integraph.generate(genPayload)
       appendLog('Generated', gen)
       const prior = gen.cardJson ?? { type: 'AdaptiveCard', version: '1.6', body: [] }
@@ -105,6 +105,9 @@ export default function EditorPage() {
     <div className="p-4 space-y-4">
       <div className="font-semibold">Jott Editor - Integraph Harness</div>
       <div className="text-sm text-gray-500">Base URL: {Integraph.baseUrl || '(unset)'}</div>
+      <div className="text-xs text-gray-600">
+        Session: runId={designer.session.runId ?? '(none)'} jottId={designer.session.jottId ?? '(none)'} correlationId={designer.session.correlationId ?? '(none)'}
+      </div>
       <div className="flex items-center gap-2 text-sm">
         <label className="flex items-center gap-2">
           <input
@@ -122,13 +125,27 @@ export default function EditorPage() {
         />
       </div>
 
+      <div className="flex items-center gap-2 text-sm">
+        <button className="px-2 py-1 border rounded" onClick={() => resetSession()} disabled={busy}>Reset session</button>
+        <button
+          className="px-2 py-1 border rounded"
+          onClick={() => {
+            const next = window.prompt('Enter runId to resume (optional)') || undefined
+            resumeSession(next, designer.session.jottId)
+          }}
+          disabled={busy}
+        >
+          Resume by runId
+        </button>
+      </div>
+
       <div className="space-y-2">
         <label className="block text-sm" htmlFor="prompt-textarea">Prompt</label>
         <textarea
           id="prompt-textarea"
           className="w-full border rounded p-2 text-sm"
           rows={3}
-          value={prompt}
+          value={userPrompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Describe the Jott you want to create"
         />
